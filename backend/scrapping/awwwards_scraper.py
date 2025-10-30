@@ -64,7 +64,7 @@ def scrape_awwwards(pages=3):
 
     os.makedirs("data", exist_ok=True)
     df = pd.DataFrame(all_data)
-    df.to_csv("data/raw_awwwards_designs.csv", index=False)
+    df.to_csv("backend/scrapping/data/raw_awwwards_designs.csv", index=False)
     print(f"🎉 Scraping complete! Saved {len(all_data)} entries to data/raw_awwwards_designs.csv")
 
 if __name__ == "__main__":

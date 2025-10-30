@@ -72,7 +72,7 @@ async def scrape_lapaninja():
         })
 
     if scraped:
-        file_path = "data/raw_lapaninja_designs.csv"
+        file_path = "backend/scrapping/data/raw_lapaninja_designs.csv"
         print(f"💾 Saving {len(scraped)} entries to {file_path}")
 
         with open(file_path, "w", newline="", encoding="utf-8") as f:
