@@ -1,77 +1,65 @@
 import os
 import pandas as pd
 from openai import OpenAI
-from lapa_captioner import generate_caption
+from dotenv import load_dotenv
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# ✅ Load environment variables
+load_dotenv()
 
-RAW_CSV = "data/raw_lapaninja_designs.csv"
-OUTPUT_CSV = "data/ai_tagged_lapaninja.csv"
+api_key = os.getenv("OPENAI_API_KEY")
+if not api_key:
+    raise ValueError("❌ OPENAI_API_KEY not found. Make sure your .env file is named '.env' (not .env.txt) and contains:\nOPENAI_API_KEY=your_key_here")
 
-def generate_tags_with_gpt(caption: str):
-    """Ask GPT to generate structured tags + category from the caption."""
+client = OpenAI(api_key=api_key)
+
+# ✅ Path to your CSV file (adjust if needed)
+csv_path = os.path.join(os.path.dirname(__file__), "data", "raw_lapaninja_designs.csv")
+
+# ✅ Read CSV
+df = pd.read_csv(csv_path)
+print(f"✅ Loaded {len(df)} designs from raw_lapaninja_designs.csv")
+
+# ✅ Column check
+if "image" not in df.columns and "image_url" not in df.columns:
+    raise ValueError("❌ No 'image' or 'image_url' column found in CSV!")
+
+# ✅ Add a new column for AI-generated captions
+captions = []
+
+for i, row in df.iterrows():
+    image_url = row.get("image") or row.get("image_url")
+    title = row.get("title", "")
+    tags = row.get("tags", "")
+
+    print(f"🖼️ Generating caption for: {title}")
+
     prompt = f"""
-    You are an AI web design analyst.
-    Based on the following design description, generate relevant structured metadata:
-    - 5 to 10 descriptive tags
-    - 1 main category (like Portfolio, SaaS, Agency, Product, Creative, Minimal, etc.)
-
-    Design Description:
-    "{caption}"
-
-    Format your output as JSON like this:
-    {{
-        "tags": ["tag1", "tag2", "tag3"],
-        "category": "CategoryName"
-    }}
+    You are an expert web design analyst. Describe the visual design style and mood of this template briefly.
+    Template title: {title}
+    Tags: {tags}
+    Image: {image_url}
     """
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.4
-    )
+
     try:
-        import json
-        data = json.loads(response.choices[0].message.content)
-        return data.get("tags", []), data.get("category", "")
-    except Exception:
-        return [], ""
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You create short, catchy, descriptive captions for website templates."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+        )
+        caption = response.choices[0].message.content.strip()
+        print(f"✨ Caption: {caption}")
+    except Exception as e:
+        print(f"⚠️ Error processing {title}: {e}")
+        caption = ""
 
-def main():
-    df = pd.read_csv(RAW_CSV)
+    captions.append(caption)
 
-    if "image_url" not in df.columns:
-        print("❌ No 'image_url' column found in CSV!")
-        return
+# ✅ Save to new CSV
+df["ai_caption"] = captions
+output_path = os.path.join(os.path.dirname(__file__), "data", "tagged_lapaninja_designs.csv")
+df.to_csv(output_path, index=False)
 
-    tagged_data = []
-    for idx, row in df.iterrows():
-        print(f"\n🖼️  Processing {idx+1}/{len(df)}: {row.get('title', 'Untitled')}")
-        image_url = row["image_url"]
-
-        # Step 1: Generate caption
-        caption = generate_caption(image_url)
-        print("   ✏️ Caption:", caption)
-
-        # Step 2: Generate tags + category
-        tags, category = generate_tags_with_gpt(caption)
-        print("   🏷️ Tags:", tags)
-        print("   📂 Category:", category)
-
-        tagged_data.append({
-            "title": row.get("title"),
-            "url": row.get("url"),
-            "image_url": image_url,
-            "caption": caption,
-            "tags": ", ".join(tags),
-            "category": category
-        })
-
-    # Save to new CSV
-    out_df = pd.DataFrame(tagged_data)
-    os.makedirs("data", exist_ok=True)
-    out_df.to_csv(OUTPUT_CSV, index=False)
-    print(f"\n🎉 AI tagging complete! Saved to {OUTPUT_CSV}")
-
-if __name__ == "__main__":
-    main()
+print(f"\n💾 Saved tagged data to {output_path}")
