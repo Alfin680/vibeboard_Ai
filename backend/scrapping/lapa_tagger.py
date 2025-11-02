@@ -1,65 +1,77 @@
 import os
 import pandas as pd
-from openai import OpenAI
-from dotenv import load_dotenv
+from transformers import BlipProcessor, BlipForConditionalGeneration
+from PIL import Image
+import requests
+from io import BytesIO
+from tqdm import tqdm
 
-# ✅ Load environment variables
-load_dotenv()
+# -------------------------------
+# CONFIG
+# -------------------------------
 
-api_key = os.getenv("OPENAI_API_KEY")
-if not api_key:
-    raise ValueError("❌ OPENAI_API_KEY not found. Make sure your .env file is named '.env' (not .env.txt) and contains:\nOPENAI_API_KEY=your_key_here")
+# Input CSV (from your scraper)
+INPUT_CSV = "backend/scrapping/data/raw_lapaninja_designs.csv"
 
-client = OpenAI(api_key=api_key)
+# Output CSV (with captions)
+OUTPUT_CSV = "backend/scrapping/data/tagged_lapaninja_designs.csv"
 
-# ✅ Path to your CSV file (adjust if needed)
-csv_path = os.path.join(os.path.dirname(__file__), "data", "raw_lapaninja_designs.csv")
+# Local BLIP model path (offline mode)
+# If you downloaded BLIP manually, use the local folder:
+MODEL_PATH = "Salesforce/blip-image-captioning-base"
 
-# ✅ Read CSV
-df = pd.read_csv(csv_path)
-print(f"✅ Loaded {len(df)} designs from raw_lapaninja_designs.csv")
+# Or to let Hugging Face download automatically, use this instead:
+# MODEL_PATH = "Salesforce/blip-image-captioning-base"
 
-# ✅ Column check
-if "image" not in df.columns and "image_url" not in df.columns:
-    raise ValueError("❌ No 'image' or 'image_url' column found in CSV!")
+# -------------------------------
+# LOAD MODEL
+# -------------------------------
+print("🚀 Loading BLIP model...")
+processor = BlipProcessor.from_pretrained(MODEL_PATH)
+model = BlipForConditionalGeneration.from_pretrained(MODEL_PATH)
+print("✅ Model loaded successfully!")
 
-# ✅ Add a new column for AI-generated captions
+# -------------------------------
+# LOAD DATA
+# -------------------------------
+if not os.path.exists(INPUT_CSV):
+    raise FileNotFoundError(f"❌ Could not find input CSV at {INPUT_CSV}")
+
+df = pd.read_csv(INPUT_CSV)
+print(f"✅ Loaded {len(df)} designs from {INPUT_CSV}")
+
+# Ensure column names
+if "image" not in df.columns:
+    raise ValueError("❌ No 'image' column found in CSV!")
+
+# -------------------------------
+# GENERATE CAPTIONS
+# -------------------------------
 captions = []
 
-for i, row in df.iterrows():
-    image_url = row.get("image") or row.get("image_url")
-    title = row.get("title", "")
-    tags = row.get("tags", "")
-
-    print(f"🖼️ Generating caption for: {title}")
-
-    prompt = f"""
-    You are an expert web design analyst. Describe the visual design style and mood of this template briefly.
-    Template title: {title}
-    Tags: {tags}
-    Image: {image_url}
-    """
+for i, row in tqdm(df.iterrows(), total=len(df)):
+    title = row.get("title", "Untitled")
+    image_url = row["image"]
 
     try:
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "You create short, catchy, descriptive captions for website templates."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.7,
-        )
-        caption = response.choices[0].message.content.strip()
-        print(f"✨ Caption: {caption}")
+        response = requests.get(image_url, timeout=10)
+        image = Image.open(BytesIO(response.content)).convert("RGB")
+
+        inputs = processor(image, return_tensors="pt")
+        out = model.generate(**inputs, max_new_tokens=50)
+        caption = processor.decode(out[0], skip_special_tokens=True)
+
+        print(f"🖼️ {title} → {caption}")
+        captions.append(caption)
+
     except Exception as e:
         print(f"⚠️ Error processing {title}: {e}")
-        caption = ""
+        captions.append("Error")
 
-    captions.append(caption)
-
-# ✅ Save to new CSV
+# -------------------------------
+# SAVE OUTPUT
+# -------------------------------
 df["ai_caption"] = captions
-output_path = os.path.join(os.path.dirname(__file__), "data", "tagged_lapaninja_designs.csv")
-df.to_csv(output_path, index=False)
-
-print(f"\n💾 Saved tagged data to {output_path}")
+os.makedirs(os.path.dirname(OUTPUT_CSV), exist_ok=True)
+df.to_csv(OUTPUT_CSV, index=False)
+print(f"\n💾 Saved tagged data to {OUTPUT_CSV}")
