@@ -1,5 +1,7 @@
 requests
-playwright
 beautifulsoup4
 pandas
-lxml
+transformers
+torch
+Pillow
+openai
