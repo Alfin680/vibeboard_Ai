@@ -100,7 +100,7 @@ def generate_tags(title, caption, source, tags_raw, colors, layout_hint, color_d
         )
 
         response = client.responses.create(
-            model="gpt-4o-mini",
+            model="gpt-4.1",
             input=prompt,
             temperature=0.0,
             max_output_tokens=512
