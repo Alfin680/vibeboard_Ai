@@ -21,67 +21,153 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 # ENHANCED PROMPT (with colors)
 # =========================
 TAGGER_PROMPT = """
-You are an expert visual curator and design analyst.
-Your job is to analyze a website design and produce structured metadata capturing its mood, purpose, and style.
+You are an expert visual curator and design analyst. 
+Your goal is to analyze a website design and output structured metadata that captures its mood, style, layout, and core aesthetic qualities.
 
-Use text metadata and color information to describe the design accurately.
+Always reason from evidence (inputs provided), not imagination. 
+Return clean, valid JSON only — no commentary, no explanation.
 
 ---
 
-INPUT:
+### INPUT
 Source: {source}
 Title: {title}
-Caption: {caption}
-Raw Tags: {tags_raw}
-Dominant Colors (HEX): {colors}
+Author: {author}
+Price: {price}
+Scraped Tags: {tags}
+Image URL: {image}
+Page URL: {url}
+
+AI Caption: {ai_caption}
+Primary Color HEX: {primary_hex}
+Primary Color Descriptor: {primary_descriptor}
+Detected Elements: {element_detections}
+CLIP Tags: {clip_tags}
 Layout Hint: {layout_hint}
-Optional Color Descriptors: {color_descriptors}
+Image Confidence: {image_confidence}
 
 ---
 
-TASK:
-Return a valid JSON object (no commentary).
-
+### OUTPUT FORMAT
 {{
-  "ai_caption": "string (<=120 chars)",
   "ai_tags": ["tag1", "tag2", "tag3"],
-  "dominant_colors": ["#hex1", "#hex2", "#hex3"],
   "layout": "string",
   "font_style": "string",
   "aesthetic_style": "string",
+  "dominant_colors": ["#hex1", "#hex2", "#hex3"],
   "confidence": 0.0
 }}
 
-CONTROLLED VOCABULARY:
-["minimal", "playful", "bold", "luxury", "calm", "vibrant", "organic", "techy",
-"modern", "retro", "premium", "elegant", "dark", "colorful", "friendly",
-"editorial", "artistic", "geometric", "warm", "cool", "spacious", "compact",
-"creative", "corporate", "youthful", "clean", "futuristic", "professional",
-"soft", "dynamic", "trustworthy", "high-contrast", "monochrome", "neon",
-"warm-tone", "cool-tone", "gradient", "flat", "3d", "illustrative", "experimental"]
+---
+
+### CONTROLLED VOCABULARIES
+ai_tags:
+["minimal","playful","bold","luxury","calm","vibrant","organic","techy",
+"modern","retro","premium","elegant","dark","colorful","friendly","editorial",
+"artistic","geometric","warm","cool","spacious","compact","creative","corporate",
+"youthful","clean","futuristic","professional","soft","dynamic","trustworthy",
+"high-contrast","monochrome","neon","warm-tone","cool-tone","gradient","flat","3d",
+"illustrative","experimental","glassmorphism","neumorphism","brutalist","modernist",
+"minimal-flat","skeuomorphic","dark-mode","light-mode","airy","dense","structured",
+"asymmetric","layered","grid-based","card-based","photographic","text-heavy",
+"image-heavy","hero-centric","micro-animated","motion-rich","sharp-edged",
+"soft-rounded","inviting","serious","energetic","moody","soothing","joyful",
+"balanced","premium","casual"]
+
+layout:
+["landing","dashboard","portfolio","app","ecommerce","blog","editorial","unknown"]
+
+font_style:
+["serif","sans-serif","geometric_sans","display","monospace","unknown"]
+
+aesthetic_style:
+["modernist","minimal-flat","editorial","retro","brutalist","luxury","organic",
+"glassmorphism","flat","3d","gradient","illustrative","experimental","unknown"]
 
 ---
 
-EXAMPLES:
+### SMARTER RULES (Follow EXACTLY)
+
+1. *Evidence-first:*  
+   Base every decision on one or more of: ai_caption, primary_descriptor, detected_elements, clip_tags, layout_hint, or scraped tags.  
+   Do NOT invent visuals or emotional qualities that aren’t present in the inputs.
+
+2. *Controlled vocab only:*  
+   Use only terms from the vocabularies above.  
+   If none apply, output "unknown" or an empty list.
+
+3. *Derive 3 vibe tags:*  
+   - Combine mood (calm, bold, playful), density (spacious, compact), and visual tone (flat, gradient, dark-mode).  
+   - Rank candidate tags by relevance found in ai_caption, primary_descriptor, or detected_elements.  
+   - Output up to 3.  
+   - Avoid redundancy (e.g., “calm” + “soothing”).
+
+4. *Layout logic:*  
+   - If layout_hint provided → use it directly.  
+   - If not, infer from ai_caption (e.g., mentions of “dashboard”, “portfolio”).  
+   - Otherwise → "unknown".
+
+5. *Font style mapping:*  
+   - "elegant", "editorial", "serif" → "serif"  
+   - "geometric", "clean", "modern", "sans" → "geometric_sans"  
+   - "display", "bold headings", "hero type" → "display"  
+   - else "unknown"
+
+6. *Aesthetic style mapping:*  
+   - "gradient", "vibrant", "neon" → "gradient"  
+   - "glass", "blur", "translucent" → "glassmorphism"  
+   - "soft shadow", "raised", "rounded" → "neumorphism"  
+   - "asymmetric", "collage", "editorial" → "editorial"  
+   - "high contrast", "brutal", "bold typography" → "brutalist"  
+   - "flat", "minimal", "clean layout" → "minimal-flat"  
+   - else "unknown"
+
+7. *Dominant colors:*  
+   - Use the provided HEX values if available.  
+   - If missing, infer 2–3 hex approximations from primary_descriptor using deterministic tone-color lookup (e.g., “muted blue” → #1e3a8a, #e8eef6, #ffffff).
+
+8. *Confidence scoring (0.0–1.0):*  
+   - Start from image_confidence value.  
+   - +0.15 if caption and chosen tags clearly align.  
+   - +0.10 if detected_elements reinforce tag choice.  
+   - −0.20 if key visual signals are missing or unclear.  
+   - Clamp between 0.0–1.0, round to 2 decimals.
+
+9. *Output validation:*  
+   - JSON only (no quotes, commentary, or prose).  
+   - Every key must exist.  
+   - All values must match vocabulary or be "unknown".  
+   - If confidence < 0.5, output remains valid but considered low certainty.
+
+10. *Deterministic fallback:*  
+   - When uncertain, use "unknown".  
+   - Consistency > creativity.  
+   - Avoid guessing or using vague words.
+
+---
+
+### EXAMPLES
+
 Input →
-Title: "Luna Finance"
-Caption: "Calm fintech dashboard with muted blue and white palette."
-Colors: ["#e8eef6", "#1e3a8a", "#ffffff"]
-Layout Hint: "Dashboard"
-Raw Tags: "Finance, SaaS"
+AI Caption: "Playful SaaS landing with bright coral CTA and expressive hero illustration."
+Primary Color HEX: "#ff6b6b"
+Primary Descriptor: "bright coral"
+Layout Hint: "landing"
+Detected Elements: ["rounded_buttons","cta_button","hero_illustration"]
 
 Output →
 {{
-  "ai_caption": "Calm, professional fintech dashboard with muted blue tones.",
-  "ai_tags": ["calm", "minimal", "professional", "finance"],
-  "dominant_colors": ["#e8eef6", "#1e3a8a", "#ffffff"],
-  "layout": "dashboard",
-  "font_style": "sans-serif",
-  "aesthetic_style": "apple-style",
-  "confidence": 0.94
+  "ai_tags": ["playful","vibrant","modern"],
+  "layout": "landing",
+  "font_style": "display",
+  "aesthetic_style": "gradient",
+  "dominant_colors": ["#ff6b6b","#ffffff","#0a0f2b"],
+  "confidence": 0.88
 }}
 
-Return JSON only.
+---
+
+Now analyze the given inputs and return the JSON object only:
 """
 
 # =========================
@@ -100,7 +186,7 @@ def generate_tags(title, caption, source, tags_raw, colors, layout_hint, color_d
         )
 
         response = client.responses.create(
-            model="gpt-4.1",
+            model="gpt-4o-mini",
             input=prompt,
             temperature=0.0,
             max_output_tokens=512
