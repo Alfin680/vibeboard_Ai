@@ -18,7 +18,7 @@ def log(msg: str):
         print(msg.encode("ascii", "ignore").decode())
 
 # --------- Defaults / Paths ----------
-SCRIPT_DIR = Path(__file__).parent
+SCRIPT_DIR = Path(__file__).parent.parent.parent
 DATA_DIR = SCRIPT_DIR / "data"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -196,9 +196,9 @@ def main():
         "--inputs",
         nargs="+",
         default=[
-            str(DATA_DIR / "raw_lapaninja_designs.csv"),
-            str(DATA_DIR / "raw_lapaninja_posts.csv"),
-            str(DATA_DIR / "raw_awwwards_designs.csv"),
+            # str(DATA_DIR / "raw_lapaninja_designs.csv"),
+            # str(DATA_DIR / "raw_lapaninja_posts.csv"),
+            # str(DATA_DIR / "raw_awwwards_designs.csv"),
             str(DATA_DIR / "combined_designs.csv"),
         ],
         help="One or more CSV paths to merge and clean."

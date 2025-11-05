@@ -1,47 +1,52 @@
-import pandas as pd
+import os
+import json
 import numpy as np
+import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.metrics.pairwise import cosine_similarity
-import json
-import os
 
-# Load data
-data_path = os.path.join("data", "cleaned_designs.csv")
-embed_path = os.path.join("data", "embeddings_cache.json")
+# File paths
+CLEAN_CSV = "data/ai_captions_tags_clean.csv"
+EMBED_JSON = "data/embeddings_cache.json"
+OUTPUT_CLUSTERED = "data/clustered_designs.csv"
+OUTPUT_SIMILARITY = "data/similarity_matrix.npy"
 
-print("🔍 Loading cleaned data...")
-df = pd.read_csv(data_path)
+def main():
+    print("Loading embeddings and dataset...")
 
-print("🧠 Loading embeddings...")
-with open(embed_path, "r") as f:
-    embeddings = json.load(f)
+    # Load CSV + embeddings
+    df = pd.read_csv(CLEAN_CSV)
+    with open(EMBED_JSON, "r", encoding="utf-8") as f:
+        embeddings = json.load(f)
 
-# Convert dict of embeddings to array
-embeddings_matrix = np.array(list(embeddings.values()))
-urls = list(embeddings.keys())
+    # Keep only rows with embeddings
+    df = df[df["url"].isin(embeddings.keys())].reset_index(drop=True)
+    if df.empty:
+        raise ValueError("No matching URLs found between CSV and embeddings JSON.")
 
-# Ensure alignment with dataset
-df = df[df["url"].isin(urls)].reset_index(drop=True)
-embeddings_matrix = np.array([embeddings[url] for url in df["url"]])
+    matrix = np.array([embeddings[url] for url in df["url"]])
 
-# Cluster using K-Means
-n_clusters = 8  # you can tune this
-print(f"🎨 Clustering {len(df)} designs into {n_clusters} groups...")
-kmeans = KMeans(n_clusters=n_clusters, random_state=42)
-df["cluster"] = kmeans.fit_predict(embeddings_matrix)
+    print(f"Clustering {len(matrix)} designs...")
 
-# Save clustered data
-clustered_csv = os.path.join("data", "clustered_designs.csv")
-df.to_csv(clustered_csv, index=False)
-print(f"✅ Clustered dataset saved → {clustered_csv}")
+    # Run KMeans clustering
+    n_clusters = 8
+    kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
+    df["cluster"] = kmeans.fit_predict(matrix)
 
-# Build similarity index (cosine similarity)
-print("🔗 Calculating similarity matrix...")
-similarity_matrix = cosine_similarity(embeddings_matrix)
+    # Compute cosine similarity
+    print("Calculating similarity matrix...")
+    similarity = cosine_similarity(matrix)
 
-# Save similarity results
-similarity_output = os.path.join("data", "similarity_matrix.npy")
-np.save(similarity_output, similarity_matrix)
-print(f"💾 Similarity matrix saved → {similarity_output}")
+    # Ensure output folder exists
+    os.makedirs(os.path.dirname(OUTPUT_CLUSTERED), exist_ok=True)
 
-print("🎉 Clustering + similarity indexing complete!")
+    # Save clustered dataset and similarity matrix
+    df.to_csv(OUTPUT_CLUSTERED, index=False)
+    np.save(OUTPUT_SIMILARITY, similarity)
+
+    print(f"Clustered dataset saved -> {OUTPUT_CLUSTERED}")
+    print(f"Similarity matrix saved -> {OUTPUT_SIMILARITY}")
+    print("Feature extraction complete.")
+
+if __name__ == "__main__":
+    main()
