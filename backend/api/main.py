@@ -1,207 +1,155 @@
-# from flask import Flask, jsonify, request
-# import pandas as pd
-# import numpy as np
-# import json
-# from sklearn.metrics.pairwise import cosine_similarity
-# from openai import OpenAI
-# import os
-# from dotenv import load_dotenv
-# # Initialize Flask
-
-# load_dotenv()
-# app = Flask(__name__)
-
-# # Load Data
-# DATA_PATH = "data/clustered_designs.csv"
-# SIMILARITY_PATH = "data/similarity_matrix.npy"
-# EMBEDDINGS_PATH = "data/embeddings_cache.json"
-
-# df = pd.read_csv(DATA_PATH)
-# similarity_matrix = np.load(SIMILARITY_PATH)
-# with open(EMBEDDINGS_PATH, "r", encoding="utf-8") as f:
-#     embeddings_dict = json.load(f)
-
-# # Initialize OpenAI client
-# client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-
-# # ------------------------ ROUTES ------------------------
-
-# @app.route("/")
-# def home():
-#     return jsonify({"message": "VibeBoard API is running!"})
-
-
-# @app.route("/designs", methods=["GET"])
-# def get_designs():
-#     page = int(request.args.get("page", 1))
-#     per_page = int(request.args.get("per_page", 20))
-#     start = (page - 1) * per_page
-#     end = start + per_page
-
-#     data = df.iloc[start:end].to_dict(orient="records")
-#     return jsonify({
-#         "page": page,
-#         "total": len(df),
-#         "data": data
-#     })
-
-
-# @app.route("/design/<int:index>", methods=["GET"])
-# def get_design(index):
-#     if index < 0 or index >= len(df):
-#         return jsonify({"error": "Invalid index"}), 404
-
-#     return jsonify(df.iloc[index].to_dict())
-
-
-# @app.route("/related/<int:index>", methods=["GET"])
-# def get_related(index):
-#     if index < 0 or index >= len(df):
-#         return jsonify({"error": "Invalid index"}), 404
-
-#     sims = similarity_matrix[index]
-#     top_indices = np.argsort(-sims)[1:6]  # top 5 excluding itself
-#     related = df.iloc[top_indices][["title", "url", "tags", "image_url"]]
-#     return jsonify(related.to_dict(orient="records"))
-
-
-# @app.route("/search", methods=["POST"])
-# def search_designs():
-#     data = request.get_json()
-#     query = data.get("query", "").strip()
-#     if not query:
-#         return jsonify({"error": "Missing query"}), 400
-
-#     # Generate embedding for query
-#     try:
-#         response = client.embeddings.create(
-#             model="text-embedding-3-large",
-#             input=query
-#         )
-#         query_emb = np.array(response.data[0].embedding)
-#     except Exception as e:
-#         return jsonify({"error": f"Embedding generation failed: {e}"}), 500
-
-#     # Compare to all embeddings
-#     urls = list(embeddings_dict.keys())
-#     embed_matrix = np.array([embeddings_dict[url] for url in urls])
-#     similarities = cosine_similarity([query_emb], embed_matrix)[0]
-#     top_indices = np.argsort(-similarities)[:10]
-
-#     results = []
-#     for i in top_indices:
-#         row = df[df["url"] == urls[i]]
-#         if not row.empty:
-#             results.append(row.iloc[0].to_dict())
-
-#     return jsonify(results)
-
-
-# @app.route("/clusters", methods=["GET"])
-# def get_clusters():
-#     clusters = df["cluster"].unique()
-#     cluster_summary = []
-
-#     for c in clusters:
-#         subset = df[df["cluster"] == c].head(3)  # top 3 samples per cluster
-#         cluster_summary.append({
-#             "cluster": int(c),
-#             "count": len(df[df["cluster"] == c]),
-#             "examples": subset[["title", "url", "tags", "image_url"]].to_dict(orient="records")
-#         })
-
-#     return jsonify(cluster_summary)
-
-
-# # ------------------------ MAIN ------------------------
-# if __name__ == "__main__":
-#     app.run(debug=True)
 import os
 import json
+import time
 import numpy as np
 import pandas as pd
+from typing import Optional
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
-from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
+from functools import lru_cache
+from dotenv import load_dotenv
+from openai import OpenAI
 
-# --- Initialize App ---
+# ------------------ CONFIG ------------------
+load_dotenv()
+DATA_PATH = "data/clustered_designs.csv"
+EMBED_PATH = "data/embeddings_cache.json"
+SIM_PATH = "data/similarity_matrix.npy"
+
+# ------------------ INIT ------------------
 app = FastAPI(title="VibeBoard API", version="1.0")
 
-# Allow CORS for frontend access
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # change this later to your frontend domain
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# --- File Paths ---
-DATA_PATH = "data/clustered_designs.csv"
-EMBED_PATH = "data/embeddings_cache.json"
-SIMILARITY_PATH = "data/similarity_matrix.npy"
-
-# --- Load Data ---
+# ------------------ LOAD DATA ------------------
 print("Loading dataset and embeddings...")
+
+if not os.path.exists(DATA_PATH):
+    raise FileNotFoundError(f"Missing dataset: {DATA_PATH}")
+if not os.path.exists(EMBED_PATH):
+    raise FileNotFoundError(f"Missing embeddings: {EMBED_PATH}")
+
 df = pd.read_csv(DATA_PATH)
-
 with open(EMBED_PATH, "r", encoding="utf-8") as f:
-    stored_embeddings = json.load(f)
+    embeddings = json.load(f)
 
-urls = list(stored_embeddings.keys())
-emb_matrix = np.array(list(stored_embeddings.values()))
+urls = list(embeddings.keys())
+emb_matrix = np.array(list(embeddings.values()))
 
-# Load local model for query embeddings
-model = SentenceTransformer("BAAI/bge-base-en")
+# Load precomputed similarity if exists
+if os.path.exists(SIM_PATH):
+    try:
+        similarity_matrix = np.load(SIM_PATH)
+    except Exception:
+        similarity_matrix = None
+else:
+    similarity_matrix = None
 
-print(f"✅ Loaded {len(emb_matrix)} embeddings.")
+# ------------------ OPENAI CLIENT ------------------
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+@lru_cache(maxsize=1024)
+def encode_query_cached(query: str) -> np.ndarray:
+    """Encode query using OpenAI embedding (same model used for dataset)."""
+    response = client.embeddings.create(
+        model="text-embedding-3-large",
+        input=query
+    )
+    return np.array(response.data[0].embedding, dtype=np.float32)
 
-# --- API Endpoints ---
+# ------------------ HELPERS ------------------
+def confidence(sim):
+    return float((sim + 1.0) / 2.0)
+
+# ------------------ ROUTES ------------------
 
 @app.get("/")
 def root():
-    return {"status": "VibeBoard API is running"}
+    return {"message": "Welcome to VibeBoard API"}
 
+@app.get("/health")
+def health():
+    return {
+        "status": "ok",
+        "rows": len(df),
+        "embeddings": len(emb_matrix),
+        "similarity_matrix": similarity_matrix is not None,
+        "embedding_model": "text-embedding-3-large (OpenAI)"
+    }
 
 @app.get("/search")
-def search(q: str = Query(..., description="Search query")):
-    """Semantic search based on query text."""
-    if not q.strip():
-        return {"error": "Query cannot be empty"}
+def search(q: str = Query(..., min_length=1), top_k: int = Query(10, ge=1, le=100)):
+    try:
+        q = q.strip()
+        query_emb = encode_query_cached(q)
+        sims = cosine_similarity(emb_matrix, query_emb.reshape(1, -1)).flatten()
+        top_idx = np.argsort(-sims)[:top_k]
 
-    query_emb = model.encode(q, normalize_embeddings=True).reshape(1, -1)
-    sims = cosine_similarity(emb_matrix, query_emb).flatten()
+        results = []
+        for i in top_idx:
+            url = urls[i]
+            row = df[df["url"] == url]
+            if row.empty:
+                continue
+            item = row.iloc[0].to_dict()
+            item["_score"] = float(sims[i])
+            item["confidence"] = confidence(sims[i])
+            results.append(item)
 
-    top_idx = sims.argsort()[-10:][::-1]
-    top_urls = [urls[i] for i in top_idx]
-    results = df[df["url"].isin(top_urls)].to_dict(orient="records")
-    return {"results": results}
-
-
-@app.get("/designs")
-def get_designs():
-    """Return all designs."""
-    return {"designs": df.to_dict(orient="records")}
-
-
-@app.get("/clusters")
-def get_clusters():
-    """Return sample designs from each cluster."""
-    clusters = df.groupby("cluster").apply(lambda x: x.sample(min(10, len(x)))).reset_index(drop=True)
-    return {"clusters": clusters.to_dict(orient="records")}
-
+        return {"query": q, "results": results}
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"error": str(e)}
 
 @app.get("/related")
-def get_related(url: str = Query(..., description="Design URL")):
-    """Return related designs based on cosine similarity."""
-    if url not in stored_embeddings:
-        return {"error": "Invalid or missing URL"}
+def related(url: str = Query(...), top_k: int = Query(5, ge=1, le=50)):
+    if url not in embeddings:
+        return {"error": "URL not found in embeddings"}
 
     idx = urls.index(url)
-    sims = cosine_similarity([emb_matrix[idx]], emb_matrix).flatten()
-    top_idx = sims.argsort()[-6:][::-1][1:]
-    related = df[df["url"].isin([urls[i] for i in top_idx])].to_dict(orient="records")
-    return {"related": related}
+    if similarity_matrix is not None and similarity_matrix.shape[0] == len(urls):
+        sims = similarity_matrix[idx]
+    else:
+        sims = cosine_similarity([emb_matrix[idx]], emb_matrix).flatten()
+
+    top_idx = np.argsort(-sims)[1: top_k + 1]
+    results = []
+    for i in top_idx:
+        rurl = urls[i]
+        row = df[df["url"] == rurl]
+        if row.empty:
+            continue
+        item = row.iloc[0].to_dict()
+        item["_score"] = float(sims[i])
+        item["confidence"] = confidence(sims[i])
+        results.append(item)
+
+    return {"url": url, "related": results}
+
+@app.get("/designs")
+def get_designs(page: int = Query(1, ge=1), per_page: int = Query(20, ge=1, le=100)):
+    start = (page - 1) * per_page
+    end = start + per_page
+    return {
+        "page": page,
+        "total": len(df),
+        "data": df.iloc[start:end].to_dict(orient="records")
+    }
+
+@app.get("/clusters")
+def clusters(sample_per_cluster: int = Query(5, ge=1, le=50)):
+    if "cluster" not in df.columns:
+        return {"error": "No cluster column in dataset"}
+    result = []
+    for c, g in df.groupby("cluster"):
+        sample = g.sample(min(sample_per_cluster, len(g))).to_dict(orient="records")
+        result.append({"cluster": int(c), "count": len(g), "examples": sample})
+    return {"clusters": result}
