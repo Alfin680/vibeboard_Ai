@@ -3,15 +3,13 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-export default function Home() {
-  const router = useRouter();
-  const [inputValue, setInputValue] = useState("");
-
-  const handleTagClick = (tag: string) => {
+export default function DashboardPage() {
+    const router = useRouter();
+const [inputValue, setInputValue] = useState("");
+const handleTagClick = (tag: string) => {
     if (inputValue.trim() === "") setInputValue(tag);
     else setInputValue((prev) => prev + " " + tag);
   };
-
   return (
     <div className="min-h-screen bg-white/60 backdrop-blur-[1px] text-black relative bg-[url('/grid.svg')] bg-[length:40px_40px] sm:bg-[length:50px_50px] bg-center">
 
@@ -29,22 +27,22 @@ export default function Home() {
 
       {/* top right button */}
       <button
-        onClick={() => router.push("/signup")}
+        onClick={() => router.push("/vibeboard")}
         className="
           absolute top-4 sm:top-6 right-4 sm:right-10
-          w-[115px] h-[42px] sm:w-[138px] sm:h-[48px]
+          w-[157px] h-[31px] sm:w-[157px] sm:h-[31px]
           flex items-center justify-center
-          text-white text-[14px] sm:text-[17px] font-semibold
-          rounded-[10px]
-          bg-[#535353]
-          bg-gradient-to-b from-[#6C6C6C] to-[#484848]
+          text-black text-[16px] sm:text-[16px] font-regular
+          rounded-tr-[10px] rounded-br-[10px] rounded-tl-[0px] rounded-bl-[10px]
+          bg-white
+          
           shadow-[inset_0_4px_4px_rgba(255,255,255,0.25)]
-          border-[4px] border-[#535353]
-          [box-shadow:inset_0_4px_8px_rgba(255,255,255,0.3),inset_0_-6px_8px_rgba(0,0,0,0.4)]
+          border-[1px] border-[#EFEFEF]
+         
           transition-transform duration-200 hover:scale-[1.05]
         "
       >
-        Start for free
+        ❤️Your VibeBoard
       </button>
 
       {/* center title */}
@@ -60,9 +58,10 @@ export default function Home() {
       </div>
 
       {/* big search box */}
+
       <div
         className="
-          mx-auto w-[92%] sm:w-full max-w-4xl
+         mx-auto w-[92%] sm:w-full max-w-4xl
     rounded-[22px] bg-white p-5 sm:p-7 mt-10
 
     border-[7px] border-[#F7F7F7]
