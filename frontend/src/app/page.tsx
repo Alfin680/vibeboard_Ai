@@ -37,10 +37,10 @@ export default function Home() {
           text-white text-[14px] sm:text-[17px] font-semibold
           rounded-[10px]
           bg-[#535353]
-          bg-gradient-to-b from-[#6C6C6C] to-[#484848]
+          bg-gradient-to-b from-[#484848] to-[#6C6C6C]
           shadow-[inset_0_4px_4px_rgba(255,255,255,0.25)]
           border-[4px] border-[#535353]
-          [box-shadow:inset_0_4px_8px_rgba(255,255,255,0.3),inset_0_-6px_8px_rgba(0,0,0,0.4)]
+         
           transition-transform duration-200 hover:scale-[1.05]
         "
       >
@@ -102,7 +102,7 @@ export default function Home() {
             className="
               w-[115px] h-[44px] sm:w-[136px] sm:h-[48px]
               text-white text-[14px] sm:text-[15px] font-semibold
-              bg-gradient-to-b from-[#484848] to-[#000000]
+              bg-gradient-to-b from-[#000000] to-[#484848]
               border-[4px] border-[#1C1C1C]
               rounded-tl-[0px] rounded-tr-[10px] rounded-br-[10px] rounded-bl-[10px]
               shadow-[inset_0px_4px_4px_rgba(255,255,255,0.25)]
