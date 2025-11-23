@@ -146,6 +146,27 @@ export default function DashboardPage() {
     signOut({ redirectUrl: "/dashboard" });
   };
 
+  const samplePrompts = [
+  "Minimalist fintech dashboard with soft gradients",
+  "Luxury eCommerce landing page with serif typography",
+  "Vibrant portfolio site with animated transitions",
+  "Dark-mode SaaS interface with neon accents",
+  "Calm wellness app UI with pastel colors"
+];
+
+const typeEffect = (text: string, i = 0) => {
+  if (i <= text.length) {
+    setInputValue(text.slice(0, i));
+    setTimeout(() => typeEffect(text, i + 1), 40); // adjust typing speed: lower = faster
+  }
+};
+
+const handleCreativeBlock = () => {
+  const random = samplePrompts[Math.floor(Math.random() * samplePrompts.length)];
+  typeEffect(random);
+};
+
+
   return (
     <div className="min-h-screen bg-white/60 backdrop-blur-[1px] text-black relative bg-[url('/grid.svg')] bg-[length:40px_40px] sm:bg-[length:50px_50px] bg-center">
       
@@ -238,7 +259,8 @@ export default function DashboardPage() {
       </div>
 
       <div className="flex justify-center mt-8 mb-10 px-4">
-        <button className="text-xs sm:text-sm border border-black/15 bg-white px-4 py-1 rounded-tl-[10px] rounded-tr-[10px] rounded-bl-[2px] rounded-br-[2px] shadow hover:bg-black/5">
+        <button className="text-xs sm:text-sm border border-black/15 bg-white px-4 py-1 rounded-tl-[10px] rounded-tr-[10px] rounded-bl-[2px] rounded-br-[2px] shadow hover:bg-black/5" 
+        onClick={handleCreativeBlock}>
           Creative Block? Click me ✨
         </button>
       </div>
