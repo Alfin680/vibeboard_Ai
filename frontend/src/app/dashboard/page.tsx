@@ -143,7 +143,7 @@ export default function DashboardPage() {
   };
 
   const handleSignOut = () => {
-    signOut({ redirectUrl: "/signup" });
+    signOut({ redirectUrl: "/dashboard" });
   };
 
   return (
