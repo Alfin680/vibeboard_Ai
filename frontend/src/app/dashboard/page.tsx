@@ -124,14 +124,17 @@
 //   );
 // }
 // app/dashboard/page.tsx
+
+
 "use client";
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useClerk } from "@clerk/nextjs";
+import { useAuth, useClerk } from "@clerk/nextjs";
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { isSignedIn } = useAuth();
   const { signOut } = useClerk();
   const [inputValue, setInputValue] = useState("");
 
@@ -139,7 +142,7 @@ export default function DashboardPage() {
     setInputValue(prev => (prev.trim() ? `${prev} ${tag}` : tag));
   };
 
-  const handleLogoClick = () => {
+  const handleSignOut = () => {
     signOut({ redirectUrl: "/signup" });
   };
 
@@ -148,7 +151,7 @@ export default function DashboardPage() {
       
       {/* Logo = signout easter egg */}
       <button
-        onClick={handleLogoClick}
+        onClick={() => (isSignedIn ? handleSignOut() : null)}
         className="absolute top-4 sm:top-6 left-4 sm:left-10 flex items-center gap-2 font-semibold scale-90 sm:scale-100"
       >
         <img
@@ -162,12 +165,21 @@ export default function DashboardPage() {
       </button>
 
       {/* Top right button */}
-      <button
-        onClick={() => router.push("/vibeboard")}
-        className="absolute top-4 sm:top-6 right-4 sm:right-10 w-[157px] h-[31px] flex items-center justify-center text-black text-[16px] rounded-tr-[10px] rounded-br-[10px] rounded-bl-[10px] bg-white border border-[#EFEFEF] shadow-[inset_0_4px_4px_rgba(255,255,255,0.25)] hover:scale-[1.05] transition"
-      >
-        ❤️Your VibeBoard
-      </button>
+      {isSignedIn ? (
+        <button
+          onClick={() => router.push("/vibeboard")}
+          className="absolute top-4 sm:top-6 right-4 sm:right-10 w-[157px] h-[31px] flex items-center justify-center text-black text-[16px] bg-white rounded-[10px] border border-[#EFEFEF] shadow hover:scale-[1.05] transition"
+        >
+          ❤️ Your VibeBoard
+        </button>
+      ) : (
+        <button
+          onClick={() => router.push("/signup")}
+          className="absolute top-4 sm:top-6 right-4 sm:right-10 w-[115px] h-[42px] text-white bg-gradient-to-b from-[#484848] to-[#6C6C6C] rounded-[10px] border-[4px] border-[#535353] shadow hover:scale-[1.05] transition"
+        >
+          Start for free
+        </button>
+      )}
 
       {/* center title */}
       <div className="flex flex-col items-center justify-center pt-28 sm:pt-32 px-4 text-center">
@@ -204,7 +216,13 @@ export default function DashboardPage() {
           ))}
 
           <button
-            onClick={() => router.push(`/vibeboard?query=${encodeURIComponent(inputValue)}`)}
+            onClick={() =>
+              router.push(
+                isSignedIn
+                  ? `/vibeboard?query=${encodeURIComponent(inputValue)}`
+                  : "/signup"
+              )
+            }
             className="w-[115px] h-[44px] sm:w-[136px] sm:h-[48px]
               text-white text-[14px] sm:text-[15px] font-semibold
               bg-gradient-to-b from-[#000000] to-[#484848]
@@ -227,3 +245,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
