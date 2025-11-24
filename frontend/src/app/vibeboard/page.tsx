@@ -29,7 +29,7 @@ setResults(data.results);
     fetchResults();
   }, [query]);
 
-  if (loading) return <p>Loading results...</p>;
+  if (loading) return <p className="text-black">Loading results...</p>;
 
   return (
     <div className="p-6">

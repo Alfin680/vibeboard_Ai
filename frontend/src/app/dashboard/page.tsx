@@ -131,13 +131,26 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuth, useClerk } from "@clerk/nextjs";
+import { saveSearch } from "@/lib/saveSearch";
+
+
 
 export default function DashboardPage() {
   const router = useRouter();
   const { isSignedIn } = useAuth();
   const { signOut } = useClerk();
   const [inputValue, setInputValue] = useState("");
+  const { userId } = useAuth();
 
+  const handleSearch = async () => {
+  if (!inputValue.trim()) return;
+
+  if (userId) {
+    await saveSearch(userId, inputValue);
+  }
+
+  router.push(`/vibeboard?query=${encodeURIComponent(inputValue)}`);
+};
   const handleTagClick = (tag: string) => {
     setInputValue(prev => (prev.trim() ? `${prev} ${tag}` : tag));
   };
@@ -237,13 +250,17 @@ const handleCreativeBlock = () => {
           ))}
 
           <button
-            onClick={() =>
-              router.push(
-                isSignedIn
-                  ? `/vibeboard?query=${encodeURIComponent(inputValue)}`
-                  : "/signup"
-              )
-            }
+            // onClick={() =>
+            //   router.push(
+            //     isSignedIn
+            //       ? `/vibeboard?query=${encodeURIComponent(inputValue)}`
+            //       : "/signup"
+            //   )
+            // }
+            onClick={() => {
+  if (isSignedIn) handleSearch();
+  else router.push("/signup");
+}}
             className="w-[115px] h-[44px] sm:w-[136px] sm:h-[48px]
               text-white text-[14px] sm:text-[15px] font-semibold
               bg-gradient-to-b from-[#000000] to-[#484848]
