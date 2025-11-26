@@ -187,6 +187,7 @@ from openai import OpenAI
 from pydantic import BaseModel
 
 from backend.db.supabase_client import supabase
+from backend.ai.groq_client import groq_client
 
 
 
@@ -246,6 +247,28 @@ def encode_query_cached(query: str) -> np.ndarray:
     )
     return np.array(response.data[0].embedding, dtype=np.float32)
 
+@app.get("/api/generate-idea")
+def generate_ui_idea():
+    prompt = """
+    Generate one creative website/app UI idea.
+    Keep it short (5–14 words), highly visual, modern, and concrete.
+    Examples:
+    - Minimalist fintech dashboard with soft gradients
+    - Luxurious ecommerce layout with serif headings
+    - Dark-mode SaaS UI with neon accents
+    - Clean wellness app with pastel tones
+    Output only the idea, no extra text.
+    """
+
+    completion = groq_client.chat.completions.create(
+        model="llama3-8b-8192",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.7
+    )
+
+    idea = completion.choices[0].message["content"].strip()
+
+    return {"idea": idea}
 
 # ------------------ HELPERS ------------------
 def confidence(sim):

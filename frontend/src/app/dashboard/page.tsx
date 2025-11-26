@@ -135,12 +135,15 @@ import { saveSearch } from "@/lib/saveSearch";
 
 
 
+
 export default function DashboardPage() {
   const router = useRouter();
-  const { isSignedIn } = useAuth();
+  //const { isSignedIn } = useAuth();
   const { signOut } = useClerk();
   const [inputValue, setInputValue] = useState("");
-  const { userId } = useAuth();
+  //const { userId } = useAuth();
+  const { isSignedIn, userId } = useAuth();
+
 
   const handleSearch = async () => {
   if (!inputValue.trim()) return;
@@ -157,6 +160,8 @@ export default function DashboardPage() {
 
   const handleSignOut = () => {
     signOut({ redirectUrl: "/dashboard" });
+    //signOut();
+
   };
 
   const samplePrompts = [
@@ -174,10 +179,22 @@ const typeEffect = (text: string, i = 0) => {
   }
 };
 
-const handleCreativeBlock = () => {
-  const random = samplePrompts[Math.floor(Math.random() * samplePrompts.length)];
-  typeEffect(random);
+const handleCreativeBlock = async () => {
+  try {
+    const res = await fetch("http://127.0.0.1:8000/api/generate-idea");
+    const data = await res.json();
+
+    const idea = data.idea?.trim() || samplePrompts[Math.floor(Math.random() * samplePrompts.length)];
+
+    // Run the typewriter animation with the generated text
+    typeEffect(idea);
+  } catch (err) {
+    console.error("Error:", err);
+    const fallback = samplePrompts[Math.floor(Math.random() * samplePrompts.length)];
+    typeEffect(fallback);
+  }
 };
+
 
 
   return (
@@ -202,14 +219,14 @@ const handleCreativeBlock = () => {
       {isSignedIn ? (
         <button
           onClick={() => router.push("/vibeboard")}
-          className="absolute top-4 sm:top-6 right-4 sm:right-10 w-[157px] h-[31px] flex items-center justify-center text-black text-[16px] bg-white rounded-[10px] border border-[#EFEFEF] shadow hover:scale-[1.05] transition"
+          className="absolute top-4 sm:top-6 right-4 sm:right-10 w-[157px] h-[31px] flex items-center justify-center text-black text-[16px] bg-white rounded-tl-[0px] rounded-tr-[10px] rounded-bl-[10px] rounded-br-[10px] border border-[#EFEFEF] shadow hover:scale-[1.05] transition"
         >
           ❤️ Your VibeBoard
         </button>
       ) : (
         <button
           onClick={() => router.push("/signup")}
-          className="absolute top-4 sm:top-6 right-4 sm:right-10 w-[115px] h-[42px] text-white bg-gradient-to-b from-[#484848] to-[#6C6C6C] rounded-[10px] border-[4px] border-[#535353] shadow hover:scale-[1.05] transition"
+          className="absolute top-4 sm:top-6 right-4 sm:right-10 w-[115px] h-[42px] text-white bg-gradient-to-b from-[#484848] to-[#6C6C6C] rounded-[10px] border-[4px] border-[#535353] shadow hover:scale-[1.05] transition shadow-[inset_0px_4px_4px_rgba(255,255,255,0.25)]"
         >
           Start for free
         </button>
@@ -217,7 +234,7 @@ const handleCreativeBlock = () => {
 
       {/* center title */}
       <div className="flex flex-col items-center justify-center pt-28 sm:pt-32 px-4 text-center">
-        <h1 className="font-[Instrument_Serif] text-black font-normal text-[48px] sm:text-[78px] leading-none">
+        <h1 className="font-[Instrument_Serif] text-black font-normal text-[48px] sm:text-[78px] leading-none tracking-tight">
           Vibeboard
         </h1>
 
