@@ -192,7 +192,7 @@ from backend.ai.groq_client import groq_client
 from fastapi import FastAPI
 from backend.api.search import router as search_router
 from backend.api.generate import router as generate_router
-from backend.api.likes import router as likes_router
+#from backend.api.likes import router as likes_router
 
 
 
@@ -210,7 +210,7 @@ SIM_PATH = "data/similarity_matrix.npy"
 # ------------------ INIT APP ------------------
 app = FastAPI(title="VibeBoard API", version="1.0")
 
-app.include_router(likes_router, prefix="/api")
+#app.include_router(likes_router, prefix="/api")
 
 app.add_middleware(
     CORSMiddleware,
