@@ -202,7 +202,7 @@ const handleCreativeBlock = async () => {
 
 
   return (
-    <div className="min-h-screen bg-white/60 backdrop-blur-[1px] text-black relative bg-[url('/grid.svg')] bg-[length:40px_40px] sm:bg-[length:50px_50px] bg-center">
+    <div className="min-h-screen bg-white/60 backdrop-blur-[1px] text-black relative bg-white bg-[length:40px_40px] sm:bg-[length:50px_50px] bg-center">
       
       {/* Logo = signout easter egg */}
       <button
@@ -246,7 +246,28 @@ const handleCreativeBlock = async () => {
           Find your visual direction instantly. Spend less time scrolling, more time designing.
         </p>
       </div>
-
+      {/* Blurry ellipse background */}
+<div className="
+  absolute left-1/2 -translate-x-1/2 
+  mt-6
+  w-[900px] h-[360px] 
+  bg-white/30 
+  rounded-[999px] 
+  blur-[150px]
+  pointer-events-none
+  -z-10
+"></div>
+      {/* Blurry ellipse behind search box */}
+<div className="
+  absolute left-1/2 -translate-x-1/2 
+  mt-10
+  w-[900px] h-[360px] 
+  bg-white/40 
+  rounded-[999px] 
+  blur-[150px]
+  pointer-events-none
+  -z-10
+"></div>
       {/* search bar */}
       <div className="mx-auto w-[92%] max-w-4xl rounded-[22px] bg-white p-7 mt-10 border-[7px] border-[#F7F7F7] shadow-[0px_7px_28px_rgba(0,0,0,0.25)]">
         <input

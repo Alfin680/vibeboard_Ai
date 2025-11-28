@@ -33,7 +33,6 @@ export default function SavedVibeBoard() {
 
       setLoading(true);
 
-      // 1. Get URLs saved by the user
       const savedUrls = await fetchSavedLikes(userId);
 
       if (savedUrls.length === 0) {
@@ -43,7 +42,6 @@ export default function SavedVibeBoard() {
         return;
       }
 
-      // 2. Fetch full design info from backend
       const res = await fetch("http://127.0.0.1:8000/api/designs/batch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -53,15 +51,12 @@ export default function SavedVibeBoard() {
       const data = await res.json();
       setSavedItems(data.designs || []);
 
-      // 3. All fetched are liked initially
       const likes = await fetchLikedStatus(
         userId,
         data.designs.map((i: ResultItem) => i.url)
-
       );
 
       setLikedMap(likes);
-
       setLoading(false);
     };
 
@@ -72,7 +67,6 @@ export default function SavedVibeBoard() {
   const toggleUnlike = async (url: string) => {
     if (!userId) return;
 
-    // Optimistic remove
     setSavedItems((prev) => prev.filter((i) => i.url !== url));
     setLikedMap((prev) => ({ ...prev, [url]: false }));
 
@@ -93,21 +87,50 @@ export default function SavedVibeBoard() {
     );
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] text-black pb-24">
-      {/* Header */}
-      <div className="sticky top-0 bg-[#FAFAFA] px-4 py-5 flex items-center justify-between border-b border-gray-300">
-        <h1 className="text-2xl font-bold text-[#222]">❤️ Your Saved Vibes</h1>
+    <div className="min-h-screen bg-[#FAFAFA] text-black pb-24 flex flex-col items-center">
+
+      {/* ---------------- HEADER ---------------- */}
+      <div className="sticky top-0 bg-[#FAFAFA] w-full px-6 py-5 flex items-center justify-between border-b border-gray-300 z-20">
         <button
           onClick={() => router.push("/dashboard")}
-          className="text-blue-600 hover:underline text-lg"
+          className="flex items-center gap-2 text-[#222] hover:opacity-70 transition"
         >
-          ← Back to Search
+          <img src="/back.png" alt="Back" className="w-5 h-5 object-contain" />
+          <span className="font-[Joan] text-lg  font-[24px]">Your Vibeboard</span>
+        </button>
+      
+
+        
+
+        <div>
+      <button
+          className="flex items-center gap-2 font-semibold text-black"
+          onClick={() => router.push("/vibeboard")}
+        >
+          <img src="/logo.png" className="h-6 w-6" />
+          <span className="font-[Instrument_Serif] text-lg">Vibeboard</span>
         </button>
       </div>
+      </div>
+      
 
-      <div className="p-6">
+      {/* ---------------- MAIN CONTAINER ---------------- */}
+      <div
+        className="
+          bg-white 
+          mt-10
+          ml-0 mr-0
+          border border-[#EAEAEA]
+          shadow-[0px_4px_40px_rgba(0,0,0,0.08)]
+          rounded-[24px]
+          w-[95%] 
+          max-w-[1200px]
+          min-h-[800px]
+          p-10
+        "
+      >
         {savedItems.length === 0 ? (
-          <div className="text-center p-20 bg-white shadow rounded-lg border border-gray-200 mt-10">
+          <div className="text-center p-20 bg-white rounded-lg border border-gray-200 mt-10">
             <p className="text-xl font-semibold text-[#222]">
               You haven&apos;t saved any vibes yet!
             </p>
@@ -116,11 +139,23 @@ export default function SavedVibeBoard() {
             </p>
           </div>
         ) : (
-          <div className="flex flex-wrap gap-7 mt-6 justify-center">
+          /* ----------- 3 CARDS PER ROW GRID ----------- */
+          
+          <div
+            className="
+              grid 
+              grid-cols-1 
+              sm:grid-cols-2 
+              lg:grid-cols-3 
+              gap-7 
+              mt-8
+            "
+          >
+            
             {savedItems.map((item) => (
               <div
                 key={item.url}
-                className="w-full sm:w-[378px] h-[400px] rounded-[12px] bg-white shadow-lg border-[6px] border-[#F7F7F7] hover:shadow-xl transition overflow-hidden flex flex-col relative"
+                className="w-full h-[400px] rounded-[12px] bg-white shadow-lg border-[6px] border-[#F7F7F7] hover:shadow-xl transition overflow-hidden flex flex-col relative"
               >
                 <div
                   className="relative group flex-shrink-0 px-2 pt-4"
@@ -140,10 +175,9 @@ export default function SavedVibeBoard() {
                     View ↗
                   </a>
 
-                  {/* UNLIKE BUTTON */}
                   <button
                     onClick={() => toggleUnlike(item.url)}
-                    className="absolute bottom-4 right-4 bg-white w-11 h-11 rounded-tl-[16px] shadow-md flex items-center justify-center hover:scale-110 transition"
+                    className="absolute bottom-0 right-0 bg-white w-12 h-12 rounded-tl-[16px] flex items-center justify-center hover:scale-110 transition"
                   >
                     <img
                       src="/likedheart.png"
@@ -162,8 +196,8 @@ export default function SavedVibeBoard() {
                       src="/sparkle.png"
                       className="inline-block h-5 w-5 mr-1"
                     />
-                    <span className="font-semibold">Vibe Explanation: </span>
-                    <span className="font-medium text-[#5C5B5B]">
+                    <span className="font-[Instrument-Sans] font-semibold">Vibe Explanation: </span>
+                    <span className="font-[Instrument-Sans] font-medium text-[#5C5B5B]">
                       {item.caption || item.title}
                     </span>
                   </p>
@@ -171,6 +205,7 @@ export default function SavedVibeBoard() {
               </div>
             ))}
           </div>
+          /* ----------- END GRID ----------- */
         )}
       </div>
     </div>

@@ -362,7 +362,8 @@ export default function VibeBoard() {
   const initialQuery = searchParams.get("query") || "";
   const [results, setResults] = useState<ResultItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [inputValue, setInputValue] = useState<string>(initialQuery);
+  const [inputValue, setInputValue] = useState("");
+
 
   // map[url] = true/false
   const [likedMap, setLikedMap] = useState<Record<string, boolean>>({});
@@ -447,14 +448,15 @@ export default function VibeBoard() {
             className="text-[#222222] text-2xl hover:text-black transition-colors"
             onClick={() => router.back()}
           >
-            &lt;
+            <img src="/back.png" alt="Back" className="w-5 h-5 object-contain" />
+          
           </button>
           <span className="font-[Joan] text-[#222222]">{initialQuery}</span>
         </div>
 
         <button
           className="flex items-center gap-2 font-semibold text-black"
-          onClick={() => router.push("/dashboard")}
+          onClick={() => router.push("/savedvibeboard")}
         >
           <img src="/logo.png" className="h-6 w-6" />
           <span className="font-[Instrument_Serif] text-lg">Vibeboard</span>
@@ -550,28 +552,65 @@ export default function VibeBoard() {
         )}
       </div>
 
-      {/* Floating bottom search */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full flex justify-center">
-        <div className="flex items-center w-[90vw] sm:w-[420px] bg-[#2A2A2A] shadow-2xl rounded-xl px-2 py-4 border border-gray-700 relative">
-          <input
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleSearch();
-            }}
-            className="flex-1 bg-transparent outline-none text-base text-white placeholder:text-gray-500"
-            placeholder="Describe your vibe..."
-            aria-label="vibe prompt"
-          />
+      {/* Floating bottom search - EXACT DASHBOARD STYLE */}
+<div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full flex justify-center z-50">
 
-          <button
-            onClick={handleSearch}
-            className="absolute right-3 bg-white text-black rounded-lg w-8 h-8 flex items-center justify-center font-bold hover:bg-gray-200"
-          >
-            ↑
-          </button>
-        </div>
-      </div>
+  <div
+    className="
+      relative
+      mx-auto 
+      w-[92%] max-w-4xl
+      bg-white 
+      rounded-[22px]
+      p-5
+      border-[7px] border-[#F7F7F7]
+      shadow-[0px_7px_28px_rgba(0,0,0,0.25)]
+      flex items-center
+    "
+  >
+
+    {/* Input inside white box */}
+    <input
+      type="text"
+       placeholder="Describe your vibe (e.g., calm fintech dashboard, bold landing page)"
+      value={inputValue}
+      onChange={(e) => setInputValue(e.target.value)}
+      onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+     
+      className="
+        flex-1
+        bg-transparent
+        outline-none
+        text-[16px]
+        text-black
+        placeholder:text-gray-500
+      "
+    />
+
+    {/* RIGHT BLACK ARROW BUTTON */}
+    <button
+      onClick={handleSearch}
+      className="
+        absolute 
+        right-5 
+        top-1/2 
+        -translate-y-1/2
+        w-[48px] h-[48px]
+        bg-gradient-to-b from-[#000000] to-[#484848]
+        border-[4px] border-[#1C1C1C]
+        rounded-[10px]
+        shadow-[inset_0px_4px_4px_rgba(255,255,255,0.25)]
+        flex items-center justify-center
+        text-white text-xl
+        hover:scale-105 transition-transform
+      "
+    >
+      <img src="/arrow-down.png" alt="Search" className="w-6 h-6 object-contain" />
+    </button>
+
+  </div>
+</div>
+
     </div>
   );
 }
