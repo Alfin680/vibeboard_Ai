@@ -189,6 +189,13 @@ from pydantic import BaseModel
 from backend.db.supabase_client import supabase
 from backend.ai.groq_client import groq_client
 
+from fastapi import FastAPI
+from backend.api.search import router as search_router
+from backend.api.generate import router as generate_router
+
+
+
+
 
 
 # ------------------ CONFIG ------------------
@@ -201,6 +208,7 @@ SIM_PATH = "data/similarity_matrix.npy"
 # ------------------ INIT APP ------------------
 app = FastAPI(title="VibeBoard API", version="1.0")
 
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Replace with domain in production
@@ -208,8 +216,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
+app.include_router(generate_router, prefix="/api")
+app.include_router(search_router, prefix="/api") 
 # ------------------ LOAD DATA ------------------
 print("Loading dataset and embeddings...")
 
@@ -247,29 +255,22 @@ def encode_query_cached(query: str) -> np.ndarray:
     )
     return np.array(response.data[0].embedding, dtype=np.float32)
 
-@app.get("/api/generate-idea")
-def generate_ui_idea():
-    prompt = """
-    Generate one creative website/app UI idea.
-    Keep it short (5–14 words), highly visual, modern, and concrete.
-    Examples:
-    - Minimalist fintech dashboard with soft gradients
-    - Luxurious ecommerce layout with serif headings
-    - Dark-mode SaaS UI with neon accents
-    - Clean wellness app with pastel tones
-    Output only the idea, no extra text.
-    """
+# @app.get("/api/generate-idea")
+# def generate_ui_idea():
+#     prompt = """
+#     Generate one creative website/app UI idea.
+#     Keep it short, visual, and concrete.
+#     Output only the idea, no extra text.
+#     """
 
-    completion = groq_client.chat.completions.create(
-        model="llama3-8b-8192",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.7
-    )
+#     completion = groq_client.chat.completions.create(
+#         model="llama3-8b-8192",
+#         messages=[{"role": "user", "content": prompt}],
+#         temperature=0.7
+#     )
 
-    idea = completion.choices[0].message["content"].strip()
-
-    return {"idea": idea}
-
+#     idea = completion.choices[0].message["content"].strip()
+#     return {"idea": idea}
 # ------------------ HELPERS ------------------
 def confidence(sim):
     return float((sim + 1.0) / 2.0)

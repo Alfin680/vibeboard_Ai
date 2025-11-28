@@ -184,16 +184,20 @@ const handleCreativeBlock = async () => {
     const res = await fetch("http://127.0.0.1:8000/api/generate-idea");
     const data = await res.json();
 
-    const idea = data.idea?.trim() || samplePrompts[Math.floor(Math.random() * samplePrompts.length)];
+    console.log("GROQ RESPONSE:", data);
 
-    // Run the typewriter animation with the generated text
-    typeEffect(idea);
+    if (data.idea) {
+      typeEffect(data.idea.trim());
+    } else {
+      // only fallback if backend failed
+      typeEffect(samplePrompts[Math.floor(Math.random() * samplePrompts.length)]);
+    }
   } catch (err) {
-    console.error("Error:", err);
-    const fallback = samplePrompts[Math.floor(Math.random() * samplePrompts.length)];
-    typeEffect(fallback);
+    console.error("Frontend Error:", err);
+    typeEffect(samplePrompts[Math.floor(Math.random() * samplePrompts.length)]);
   }
 };
+
 
 
 
@@ -238,7 +242,7 @@ const handleCreativeBlock = async () => {
           Vibeboard
         </h1>
 
-        <p className="mt-4 sm:mt-6 text-[16px] sm:text-[20px] text-black/70 font-normal max-w-[90%] sm:max-w-none">
+        <p className="font-[Joan] mt-4 sm:mt-6 text-[16px] sm:text-[20px] text-[#222222] text-black/70-400 font-normal max-w-[90%] sm:max-w-none">
           Find your visual direction instantly. Spend less time scrolling, more time designing.
         </p>
       </div>
