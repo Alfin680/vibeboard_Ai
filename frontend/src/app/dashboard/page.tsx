@@ -222,7 +222,7 @@ const handleCreativeBlock = async () => {
       {/* Top right button */}
       {isSignedIn ? (
         <button
-          onClick={() => router.push("/vibeboard")}
+          onClick={() => router.push("/savedvibeboard")}
           className="absolute top-4 sm:top-6 right-4 sm:right-10 w-[157px] h-[31px] flex items-center justify-center text-black text-[16px] bg-white rounded-tl-[0px] rounded-tr-[10px] rounded-bl-[10px] rounded-br-[10px] border border-[#EFEFEF] shadow hover:scale-[1.05] transition"
         >
           ❤️ Your VibeBoard
