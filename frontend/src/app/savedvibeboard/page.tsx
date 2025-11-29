@@ -168,12 +168,17 @@ export default function SavedVibeBoard() {
                   />
 
                   <a
-                    href={item.url}
-                    target="_blank"
-                    className="absolute inset-0 m-auto h-10 w-24 opacity-0 group-hover:opacity-100 transition bg-white/20 backdrop-blur-sm rounded-lg text-sm font-semibold text-white flex items-center justify-center border border-white/30"
-                  >
-                    View ↗
-                  </a>
+                      href={item.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="absolute inset-0 m-auto h-10 w-24 opacity-0
+                      group-hover:opacity-100 bg-white shadow-[0_4px_4px_0_rgba(0,0,0,0.25)]
+                      rounded-tl-[0px] rounded-tr-[8px] rounded-bl-[8px] rounded-br-[8px] text-sm font-[Joan]  text-black flex items-center justify-center
+                      border border-white/30 transition-opacity duration-300"
+                    >
+                    <span>View</span>
+                    <img src="/external-link.png" alt="View" className="w-4 h-4 ml-1" /> 
+                    </a>
 
                   <button
                     onClick={() => toggleUnlike(item.url)}
@@ -196,8 +201,8 @@ export default function SavedVibeBoard() {
                       src="/sparkle.png"
                       className="inline-block h-5 w-5 mr-1"
                     />
-                    <span className="font-[Instrument-Sans] font-semibold">Vibe Explanation: </span>
-                    <span className="font-[Instrument-Sans] font-medium text-[#5C5B5B]">
+                    <span className="font-[Instrument_Sans] font-semibold">Vibe Explanation: </span>
+                    <span className="font-[Instrument_Sans] font-medium text-[#5C5B5B]">
                       {item.caption || item.title}
                     </span>
                   </p>

@@ -479,7 +479,7 @@ export default function VibeBoard() {
                     w-full sm:w-[378px] h-[400px]
                     rounded-[12px] bg-white shadow-lg
                     border-[6px] border-[#F7F7F7]
-                    hover:shadow-xl transition-all duration-200
+                    hover:shadow-2xl transition-all duration-200
                     overflow-hidden flex flex-col text-black
                   "
                 >
@@ -495,11 +495,12 @@ export default function VibeBoard() {
                       target="_blank"
                       rel="noreferrer"
                       className="absolute inset-0 m-auto h-10 w-24 opacity-0
-                      group-hover:opacity-100 bg-white/20 backdrop-blur-sm
-                      rounded-lg text-sm font-semibold text-white flex items-center justify-center
+                      group-hover:opacity-100 bg-white shadow-[0_4px_4px_0_rgba(0,0,0,0.25)]
+                      rounded-tl-[0px] rounded-tr-[8px] rounded-bl-[8px] rounded-br-[8px] text-sm font-[Joan]  text-black flex items-center justify-center
                       border border-white/30 transition-opacity duration-300"
                     >
-                      View ↗
+                    <span>View</span>
+                    <img src="/external-link.png" alt="View" className="w-4 h-4 ml-1" /> 
                     </a>
 
                     {/* HEART */}
@@ -524,14 +525,14 @@ export default function VibeBoard() {
 
                   {/* CAPTION */}
                   <div className="px-2 pt-4 pb-4 text-sm text-gray-700 border-t border-gray-200" style={{ height: "30%" }}>
-                    <p className="font-[Instrument-Sans] text-[18px]">
+                    <p className="font-[Instrument_Sans] text-[18px]">
                       <img
                         src="/sparkle.png"
                         className="inline-block h-5 w-5 mr-1"
                         alt=""
                       />
-                      <span className="font-semibold text-[#222]">Vibe Explanation: </span>
-                      <span className="font-medium text-[#5C5B5B]">
+                      <span className="font-semibold text-[#222] font-[Instrument_sans] font-[18px]">Vibe Explanation: </span>
+                      <span className="font-medium text-[#5C5B5B] font-[Instrument_Sans]">
                         {item.caption || item.title || "Creative Concept"}
                       </span>
                     </p>
@@ -564,7 +565,7 @@ export default function VibeBoard() {
       rounded-[22px]
       p-5
       border-[7px] border-[#F7F7F7]
-      shadow-[0px_7px_28px_rgba(0,0,0,0.25)]
+      shadow-[0px_7px_28px_rgba(0,0,0,0.5)]
       flex items-center
     "
   >
@@ -584,6 +585,7 @@ export default function VibeBoard() {
         text-[16px]
         text-black
         placeholder:text-gray-500
+        
       "
     />
 

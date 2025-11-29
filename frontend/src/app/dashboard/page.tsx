@@ -303,7 +303,10 @@ const handleCreativeBlock = async () => {
   if (isSignedIn) handleSearch();
   else router.push("/signup");
 }}
-            className="w-[115px] h-[44px] sm:w-[136px] sm:h-[48px]
+            className=" w-[100px] h-[40px]
+                xs:w-[115px] xs:h-[44px]
+                sm:w-[136px] sm:h-[48px]
+                md:w-[150px] md:h-[52px]
               text-white text-[14px] sm:text-[15px] font-semibold
               bg-gradient-to-b from-[#000000] to-[#484848]
               border-[4px] border-[#1C1C1C]
