@@ -77,15 +77,38 @@ export default function SavedVibeBoard() {
     });
   };
 
-  // ---------------- UI ----------------
-
+  // ---------------- LOTTIE LOADING SCREEN ----------------
   if (loading)
     return (
-      <div className="min-h-screen p-6 text-center text-xl text-[#222]">
-        Loading your saved vibes...
+      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#FAFAFA]">
+
+        {/* Inject Lottie HTML safely */}
+        <div
+          className="w-[300px] h-[300px]"
+          dangerouslySetInnerHTML={{
+            __html: `
+              <script 
+                src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.8.5/dist/dotlottie-wc.js" 
+                type="module">
+              </script>
+
+              <dotlottie-wc 
+                src="https://lottie.host/e6ca270f-0b6e-4c08-9c7c-db9a6a22b360/6IKyykMzYW.lottie"
+                style="width: 300px; height: 300px;"
+                autoplay
+                loop>
+              </dotlottie-wc>
+            `,
+          }}
+        />
+
+        <p className="text-[#222] text-lg mt-4 font-[Joan]">
+          Loading your saved vibes...
+        </p>
       </div>
     );
 
+  // ---------------- UI ----------------
   return (
     <div className="min-h-screen bg-[#FAFAFA] text-black pb-24 flex flex-col items-center">
 
@@ -98,21 +121,17 @@ export default function SavedVibeBoard() {
           <img src="/back.png" alt="Back" className="w-5 h-5 object-contain" />
           <span className="font-[Joan] text-lg  font-[24px]">Your Vibeboard</span>
         </button>
-      
-
-        
 
         <div>
-      <button
-          className="flex items-center gap-2 font-semibold text-black"
-          onClick={() => router.push("/vibeboard")}
-        >
-          <img src="/logo.png" className="h-6 w-6" />
-          <span className="font-[Instrument_Serif] text-lg">Vibeboard</span>
-        </button>
+          <button
+            className="flex items-center gap-2 font-semibold text-black"
+            onClick={() => router.push("/dashboard")}
+          >
+            <img src="/logo.png" className="h-6 w-6" />
+            <span className="font-[Instrument_Serif] text-lg">Vibeboard</span>
+          </button>
+        </div>
       </div>
-      </div>
-      
 
       {/* ---------------- MAIN CONTAINER ---------------- */}
       <div
@@ -122,10 +141,10 @@ export default function SavedVibeBoard() {
           ml-0 mr-0
           border border-[#EAEAEA]
           shadow-[0px_4px_40px_rgba(0,0,0,0.08)]
-          rounded-[24px]
+          rounded-[0px]
           w-[95%] 
-          max-w-[1200px]
-          min-h-[800px]
+          max-w-[1200px] sm:w-[90%]
+          min-h-[800px] sm:h-[auto]
           p-10
         "
       >
@@ -140,7 +159,7 @@ export default function SavedVibeBoard() {
           </div>
         ) : (
           /* ----------- 3 CARDS PER ROW GRID ----------- */
-          
+
           <div
             className="
               grid 
@@ -151,7 +170,6 @@ export default function SavedVibeBoard() {
               mt-8
             "
           >
-            
             {savedItems.map((item) => (
               <div
                 key={item.url}
@@ -168,17 +186,17 @@ export default function SavedVibeBoard() {
                   />
 
                   <a
-                      href={item.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="absolute inset-0 m-auto h-10 w-24 opacity-0
+                    href={item.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="absolute inset-0 m-auto h-10 w-24 opacity-0
                       group-hover:opacity-100 bg-white shadow-[0_4px_4px_0_rgba(0,0,0,0.25)]
-                      rounded-tl-[0px] rounded-tr-[8px] rounded-bl-[8px] rounded-br-[8px] text-sm font-[Joan]  text-black flex items-center justify-center
+                      rounded-tl-[0px] rounded-tr-[8px] rounded-bl-[8px] rounded-br-[8px] text-sm font-[Joan] text-black flex items-center justify-center
                       border border-white/30 transition-opacity duration-300"
-                    >
+                  >
                     <span>View</span>
-                    <img src="/external-link.png" alt="View" className="w-4 h-4 ml-1" /> 
-                    </a>
+                    <img src="/external-link.png" alt="View" className="w-4 h-4 ml-1" />
+                  </a>
 
                   <button
                     onClick={() => toggleUnlike(item.url)}
@@ -210,6 +228,7 @@ export default function SavedVibeBoard() {
               </div>
             ))}
           </div>
+
           /* ----------- END GRID ----------- */
         )}
       </div>
