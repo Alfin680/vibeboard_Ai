@@ -719,6 +719,8 @@ SIM_PATH = "data/similarity_matrix.npy"
 # ------------------ INIT APP ------------------
 app = FastAPI(title="VibeBoard API", version="1.0")
 
+#app.include_router(likes_router, prefix="/api")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],               # Replace with domain in production

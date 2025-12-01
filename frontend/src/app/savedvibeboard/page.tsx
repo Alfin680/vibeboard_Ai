@@ -33,7 +33,6 @@ export default function SavedVibeBoard() {
 
       setLoading(true);
 
-      // 1. Get URLs saved by the user
       const savedUrls = await fetchSavedLikes(userId);
 
       if (savedUrls.length === 0) {
@@ -43,7 +42,6 @@ export default function SavedVibeBoard() {
         return;
       }
 
-      // 2. Fetch full design info from backend
       const res = await fetch("http://127.0.0.1:8000/api/designs/batch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -53,15 +51,12 @@ export default function SavedVibeBoard() {
       const data = await res.json();
       setSavedItems(data.designs || []);
 
-      // 3. All fetched are liked initially
       const likes = await fetchLikedStatus(
         userId,
         data.designs.map((i: ResultItem) => i.url)
-
       );
 
       setLikedMap(likes);
-
       setLoading(false);
     };
 
@@ -72,7 +67,6 @@ export default function SavedVibeBoard() {
   const toggleUnlike = async (url: string) => {
     if (!userId) return;
 
-    // Optimistic remove
     setSavedItems((prev) => prev.filter((i) => i.url !== url));
     setLikedMap((prev) => ({ ...prev, [url]: false }));
 
@@ -83,31 +77,79 @@ export default function SavedVibeBoard() {
     });
   };
 
-  // ---------------- UI ----------------
-
+  // ---------------- LOTTIE LOADING SCREEN ----------------
   if (loading)
     return (
-      <div className="min-h-screen p-6 text-center text-xl text-[#222]">
-        Loading your saved vibes...
+      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#FAFAFA]">
+
+        {/* Inject Lottie HTML safely */}
+        <div
+          className="w-[300px] h-[300px]"
+          dangerouslySetInnerHTML={{
+            __html: `
+              <script 
+                src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.8.5/dist/dotlottie-wc.js" 
+                type="module">
+              </script>
+
+              <dotlottie-wc 
+                src="https://lottie.host/e6ca270f-0b6e-4c08-9c7c-db9a6a22b360/6IKyykMzYW.lottie"
+                style="width: 300px; height: 300px;"
+                autoplay
+                loop>
+              </dotlottie-wc>
+            `,
+          }}
+        />
+
+        <p className="text-[#222] text-lg mt-4 font-[Joan]">
+          Loading your saved vibes...
+        </p>
       </div>
     );
 
+  // ---------------- UI ----------------
   return (
-    <div className="min-h-screen bg-[#FAFAFA] text-black pb-24">
-      {/* Header */}
-      <div className="sticky top-0 bg-[#FAFAFA] px-4 py-5 flex items-center justify-between border-b border-gray-300">
-        <h1 className="text-2xl font-bold text-[#222]">❤️ Your Saved Vibes</h1>
+    <div className="min-h-screen bg-[#FAFAFA] text-black pb-24 flex flex-col items-center">
+
+      {/* ---------------- HEADER ---------------- */}
+      <div className="sticky top-0 bg-[#FAFAFA] w-full px-6 py-5 flex items-center justify-between border-b border-gray-300 z-20">
         <button
           onClick={() => router.push("/dashboard")}
-          className="text-blue-600 hover:underline text-lg"
+          className="flex items-center gap-2 text-[#222] hover:opacity-70 transition"
         >
-          ← Back to Search
+          <img src="/back.png" alt="Back" className="w-5 h-5 object-contain" />
+          <span className="font-[Joan] text-lg  font-[24px]">Your Vibeboard</span>
         </button>
+
+        <div>
+          <button
+            className="flex items-center gap-2 font-semibold text-black"
+            onClick={() => router.push("/dashboard")}
+          >
+            <img src="/logo.png" className="h-6 w-6" />
+            <span className="font-[Instrument_Serif] text-lg">Vibeboard</span>
+          </button>
+        </div>
       </div>
 
-      <div className="p-6">
+      {/* ---------------- MAIN CONTAINER ---------------- */}
+      <div
+        className="
+          bg-white 
+          mt-10
+          ml-0 mr-0
+          border border-[#EAEAEA]
+          shadow-[0px_4px_40px_rgba(0,0,0,0.08)]
+          rounded-[0px]
+          w-[95%] 
+          max-w-[1200px] sm:w-[90%]
+          min-h-[800px] sm:h-[auto]
+          p-10
+        "
+      >
         {savedItems.length === 0 ? (
-          <div className="text-center p-20 bg-white shadow rounded-lg border border-gray-200 mt-10">
+          <div className="text-center p-20 bg-white rounded-lg border border-gray-200 mt-10">
             <p className="text-xl font-semibold text-[#222]">
               You haven&apos;t saved any vibes yet!
             </p>
@@ -116,11 +158,22 @@ export default function SavedVibeBoard() {
             </p>
           </div>
         ) : (
-          <div className="flex flex-wrap gap-7 mt-6 justify-center">
+          /* ----------- 3 CARDS PER ROW GRID ----------- */
+
+          <div
+            className="
+              grid 
+              grid-cols-1 
+              sm:grid-cols-2 
+              lg:grid-cols-3 
+              gap-7 
+              mt-8
+            "
+          >
             {savedItems.map((item) => (
               <div
                 key={item.url}
-                className="w-full sm:w-[378px] h-[400px] rounded-[12px] bg-white shadow-lg border-[6px] border-[#F7F7F7] hover:shadow-xl transition overflow-hidden flex flex-col relative"
+                className="w-full h-[400px] rounded-[12px] bg-white shadow-lg border-[6px] border-[#F7F7F7] hover:shadow-xl transition overflow-hidden flex flex-col relative"
               >
                 <div
                   className="relative group flex-shrink-0 px-2 pt-4"
@@ -135,15 +188,19 @@ export default function SavedVibeBoard() {
                   <a
                     href={item.url}
                     target="_blank"
-                    className="absolute inset-0 m-auto h-10 w-24 opacity-0 group-hover:opacity-100 transition bg-white/20 backdrop-blur-sm rounded-lg text-sm font-semibold text-white flex items-center justify-center border border-white/30"
+                    rel="noreferrer"
+                    className="absolute inset-0 m-auto h-10 w-24 opacity-0
+                      group-hover:opacity-100 bg-white shadow-[0_4px_4px_0_rgba(0,0,0,0.25)]
+                      rounded-tl-[0px] rounded-tr-[8px] rounded-bl-[8px] rounded-br-[8px] text-sm font-[Joan] text-black flex items-center justify-center
+                      border border-white/30 transition-opacity duration-300"
                   >
-                    View ↗
+                    <span>View</span>
+                    <img src="/external-link.png" alt="View" className="w-4 h-4 ml-1" />
                   </a>
 
-                  {/* UNLIKE BUTTON */}
                   <button
                     onClick={() => toggleUnlike(item.url)}
-                    className="absolute bottom-4 right-4 bg-white w-11 h-11 rounded-tl-[16px] shadow-md flex items-center justify-center hover:scale-110 transition"
+                    className="absolute bottom-0 right-0 bg-white w-12 h-12 rounded-tl-[16px] flex items-center justify-center hover:scale-110 transition"
                   >
                     <img
                       src="/likedheart.png"
@@ -162,8 +219,8 @@ export default function SavedVibeBoard() {
                       src="/sparkle.png"
                       className="inline-block h-5 w-5 mr-1"
                     />
-                    <span className="font-semibold">Vibe Explanation: </span>
-                    <span className="font-medium text-[#5C5B5B]">
+                    <span className="font-[Instrument_Sans] font-semibold">Vibe Explanation: </span>
+                    <span className="font-[Instrument_Sans] font-medium text-[#5C5B5B]">
                       {item.caption || item.title}
                     </span>
                   </p>
@@ -171,6 +228,8 @@ export default function SavedVibeBoard() {
               </div>
             ))}
           </div>
+
+          /* ----------- END GRID ----------- */
         )}
       </div>
     </div>
