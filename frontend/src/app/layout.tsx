@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 //import "./globals.css";
 import "@fontsource/instrument-serif"; 
 import { Instrument_Sans} from "next/font/google";
-import "@fontsource/instrument-sans";
+//import "@fontsource/instrument-sans";
 
 import localFont from "next/font/local";
 
