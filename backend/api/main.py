@@ -290,7 +290,6 @@ def batch_designs(urls: List[str] = Body(...)):
 # ------------------ GENERATE (Groq or fallback) ------------------
 @app.get("/api/generate-idea")
 def generate_idea():
-    # If Groq client configured, use it. Otherwise fallback to a small set of prompts.
     fallback_prompts = [
         "Minimalist fintech dashboard with soft gradients",
         "Luxury eCommerce landing page with serif typography",
@@ -298,18 +297,30 @@ def generate_idea():
         "Dark-mode SaaS interface with neon accents",
         "Calm wellness app UI with pastel colors"
     ]
-    if groq_client:
-        try:
-            # simple chat request depending on Groq client API
-            completion = groq_client.chat.completions.create(
-                model="llama3-8b-8192",
-                messages=[{"role": "user", "content": "Generate one short creative UI idea, 8-12 words max. Output only the idea."}],
-                temperature=0.7
-            )
-            idea = completion.choices[0].message["content"].strip()
-            return {"idea": idea}
-        except Exception as e:
-            logger.exception("Groq generation failed: %s", e)
+
+    prompt = (
+        "Generate a single creative website UI concept description. "
+        "It must be short (max 10 words), focused on style, color, and mood. "
+        "Return ONLY the description. "
+        "Examples: " + ", ".join(fallback_prompts)
+    )
+
+    try:
+        completion = groq_client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7,
+            max_tokens=30,
+        )
+
+        idea = completion.choices[0].message.content.strip()
+
+        # Safety fallback if model goes rogue
+        if not idea or len(idea.split()) < 6:
             return {"idea": np.random.choice(fallback_prompts)}
-    else:
+
+        return {"idea": idea}
+
+    except Exception as e:
+        logger.exception("Groq generation failed: %s", e)
         return {"idea": np.random.choice(fallback_prompts)}

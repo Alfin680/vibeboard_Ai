@@ -17,10 +17,11 @@ async def generate_idea():
                 Calm wellness app UI with pastel colors"""
     try:
         completion = groq_client.chat.completions.create(
-            model="llama-3.1-8b-instant",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.7 # Keep temperature low (0.5 to 0.7) for concrete ideas
-        )
+    model="llama-3.1-8b-instant",
+    messages=[{"role": "user", "content": prompt}],
+    temperature=0.7
+)
+
 
         idea = completion.choices[0].message.content.strip()
 
